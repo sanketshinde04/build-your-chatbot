@@ -1,6 +1,15 @@
 import streamlit as st
 from google import genai
 
+# Helper function to extract text safely from Gemini response
+def extract_text_from_response(response):
+    """Extract text content from Gemini response, ignoring non-text parts like thought_signature"""
+    text_parts = []
+    for part in response.candidates[0].content.parts:
+        if hasattr(part, 'text'):
+            text_parts.append(part.text)
+    return "".join(text_parts) if text_parts else ""
+
 # Page config
 st.set_page_config(page_title="Gemini Chatbot", page_icon="💬")
 
@@ -28,7 +37,7 @@ if prompt := st.chat_input("Type your message here..."):
         st.markdown(prompt)
 
     # Create chat and replay history
-    chat = client.chats.create(model="gemini-2.5-flash")
+    chat = client.chats.create(model="gemini-3.1-flash-lite-preview")
     for msg in st.session_state.history[:-1]:
         if msg["role"] == "user":
             chat.send_message(msg["content"])
@@ -36,7 +45,7 @@ if prompt := st.chat_input("Type your message here..."):
     # Get response from Gemini
     with st.chat_message("assistant"):
         response = chat.send_message(prompt)
-        reply = response.text
+        reply = extract_text_from_response(response)
         st.markdown(reply)
 
     # Add assistant message to history
@@ -44,6 +53,6 @@ if prompt := st.chat_input("Type your message here..."):
 
 # Sidebar
 st.sidebar.title("About")
-st.sidebar.info("This chatbot uses Google's Gemini 2.5 Flash model to have conversations with you.")
+st.sidebar.info("This chatbot uses Google's gemini-3.1-flash-lite-preview model to have conversations with you.")
 st.sidebar.markdown("---")
 st.sidebar.markdown("❤️ Made by [Build Fast with AI](https://buildfastwithai.com)")

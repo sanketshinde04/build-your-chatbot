@@ -2,6 +2,15 @@ import streamlit as st
 from google import genai
 from google.genai import types
 
+# Helper function to extract text safely from Gemini response
+def extract_text_from_response(response):
+    """Extract text content from Gemini response, ignoring non-text parts like thought_signature"""
+    text_parts = []
+    for part in response.candidates[0].content.parts:
+        if hasattr(part, 'text'):
+            text_parts.append(part.text)
+    return "".join(text_parts) if text_parts else ""
+
 # Page config
 st.set_page_config(page_title="Gemini Chatbot with System Prompt", page_icon="💬")
 
@@ -49,7 +58,7 @@ if prompt := st.chat_input("Type your message here..."):
 
     # Create chat with system prompt
     chat = client.chats.create(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite-preview",
         config=types.GenerateContentConfig(system_instruction=system_prompt)
     )
     
@@ -61,7 +70,7 @@ if prompt := st.chat_input("Type your message here..."):
     # Get response from Gemini
     with st.chat_message("assistant"):
         response = chat.send_message(prompt)
-        reply = response.text
+        reply = extract_text_from_response(response)
         st.markdown(reply)
 
     # Add assistant message to history
